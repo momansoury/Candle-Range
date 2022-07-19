@@ -25,8 +25,9 @@ input int distance_y = 12;
 input bool DrawTextAsBackground = false; //DrawTextAsBackground: if true, the text will be drawn as background.
 input string ObjectPrefix = "CR-";
 
-int n_digits = 0;
-double divider = 1;
+int n_digits = 0, subwindow;
+double divider = 1, price, H, L, O, C, CC, range0, range, body;
+datetime tm;
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -77,11 +78,11 @@ int OnCalculate(const int rates_total,
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
-void OutputRange(double range, double body)
+void OutputRange(double r, double b)
   {
-   string text = "Range: " + DoubleToString(Normalize(range), n_digits);
+   string text = "Range: " + DoubleToString(Normalize(r), n_digits);
    if(ShowBodySize)
-      text += " Body: " + DoubleToString(Normalize(body), n_digits);
+      text += " Body: " + DoubleToString(Normalize(b), n_digits);
    ObjectSetText(ObjectPrefix + "Range", text, font_size, font_face, font_color);
   }
 
@@ -103,11 +104,8 @@ void OnChartEvent(const int id,
   {
    if(id == CHARTEVENT_MOUSE_MOVE)
      {
-      int subwindow;
-      datetime time;
-      double price, H, L, O, C, CC;
-      ChartXYToTimePrice(ChartID(), (int)lparam, (int)dparam, subwindow, time, price);
-      int i = iBarShift(Symbol(), Period(), time, true);
+      ChartXYToTimePrice(ChartID(), (int)lparam, (int)dparam, subwindow, tm, price);
+      int i = iBarShift(Symbol(), Period(), tm, true);
       if(i < 0)
          return;
       static double prev_range = 0;
@@ -117,9 +115,9 @@ void OnChartEvent(const int id,
       O = Open[i];
       C = Close[i];
       CC = Close[i + 1];
-      double range0 = MathMax(MathAbs(CC - H), MathAbs(CC - L));
-      double range = MathMax(H - L, range0);
-      double body = MathAbs(O - C);
+      range0 = MathMax(MathAbs(CC - H), MathAbs(CC - L));
+      range = MathMax(H - L, range0);
+      body = MathAbs(O - C);
       if((range == prev_range) && (body == prev_body))
          return; // Optimization to avoid updating the range object when nothing changed.
       prev_range = range;
